@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>段码屏 · 数字与八小灯</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1a1e28 0%, #2b303e 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+
+        .container {
+            background: #161a22;
+            padding: 2rem 2.5rem 2.5rem;
+            border-radius: 3rem;
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.7), inset 0 0 8px #4a5163;
+            border: 1px solid #4f5a6b;
+        }
+
+        .display-panel {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        /* ----- 段码屏 (七段数码管) ----- */
+        .seven-seg {
+            background: #0b0d10;
+            padding: 1.5rem 1.2rem;
+            border-radius: 2rem;
+            box-shadow: inset 0 0 15px #000000, 0 8px 0 #0a0c0f, 0 12px 20px #00000080;
+            border-bottom: 2px solid #353e4b;
+        }
+
+        .seg-digit {
+            position: relative;
+            width: 140px;
+            height: 240px;
+            margin: 0 auto;
+        }
+
+        .segment {
+            position: absolute;
+            background-color: #2a2f3a;
+            border-radius: 20px;
+            box-shadow: inset 0 -2px 5px #00000055, 0 0 0 1px #111;
+            transition: background-color 0.08s, box-shadow 0.08s;
+        }
+
+        /* 点亮状态 */
+        .segment.on {
+            background-color: #ff3b3b;
+            box-shadow: 0 0 12px #ff5e5e, 0 0 25px #ff0000aa, inset 0 -2px 5px #fff5;
+        }
+
+        /* 水平段 a, g, d */
+        .seg-a, .seg-g, .seg-d {
+            width: 100px;
+            height: 22px;
+            left: 20px;
+        }
+
+        .seg-a {
+            top: 8px;
+        }
+
+        .seg-g {
+            top: 109px;
+        }
+
+        .seg-d {
+            bottom: 8px;
+        }
+
+        /* 垂直段 f, b, e, c */
+        .seg-f, .seg-b, .seg-e, .seg-c {
+            width: 22px;
+            height: 90px;
+            left: 8px;
+        }
+
+        .seg-b, .seg-c {
+            left: 110px;
+        }
+
+        .seg-f {
+            top: 26px;
+        }
+
+        .seg-b {
+            top: 26px;
+        }
+
+        .seg-e {
+            bottom: 26px;
+        }
+
+        .seg-c {
+            bottom: 26px;
+        }
+
+        /* 小数点（可选但不用，七段没有额外dp） */
+        /* 就用七段，没有dp，但为了显示数字, 我们忽略dp */
+
+        /* ----- 八个小灯 (LED) ----- */
+        .led-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8rem;
+            background: #0b0d10;
+            padding: 1.5rem 1.2rem;
+            border-radius: 2rem;
+            box-shadow: inset 0 0 15px #000000, 0 8px 0 #0a0c0f, 0 12px 20px #00000080;
+            border-bottom: 2px solid #353e4b;
+        }
+
+        .led-label {
+            color: #9aaec9;
+            font-weight: 600;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px #2f3b4e;
+            margin-bottom: 0.5rem;
+        }
+
+        .led-row {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .led {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #1b1f28;
+            box-shadow: inset 0 -5px 8px #000000cc, 0 0 0 2px #0f1116, 0 0 8px #000000aa;
+            transition: background 0.1s, box-shadow 0.1s;
+            border: 1px solid #3f4757;
+        }
+
+        .led.on {
+            background: #00e0ff;
+            box-shadow: 0 0 15px #00d4ff, 0 0 30px #00a3ff, inset 0 -2px 5px #ffffffcc;
+            border: 1px solid #9ae6ff;
+        }
+
+        /* 数字输入区域 */
+        .input-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            background: #0b0e14;
+            padding: 1rem 1.8rem;
+            border-radius: 4rem;
+            box-shadow: inset 0 0 8px #000000, 0 5px 0 #0a0c0f;
+        }
+
+        .input-area label {
+            color: #b8c7dd;
+            font-weight: 500;
+            letter-spacing: 1px;
+            font-size: 1.1rem;
+        }
+
+        .input-area input {
+            width: 100px;
+            padding: 0.6rem 1rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            background: #1f2531;
+            border: 2px solid #3d4a5e;
+            border-radius: 2rem;
+            color: #ffd966;
+            outline: none;
+            box-shadow: inset 0 4px 8px #00000055, 0 2px 0 #0e1118;
+            transition: 0.15s;
+            font-family: 'Courier New', monospace;
+        }
+
+        .input-area input:focus {
+            border-color: #ffb347;
+            background: #1e2637;
+            color: #fff1b8;
+            box-shadow: inset 0 4px 8px #000, 0 0 12px #ffb34766;
+        }
+
+        .input-area button {
+            background: #2d3648;
+            border: none;
+            padding: 0.6rem 1.6rem;
+            border-radius: 3rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #eef3ff;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #0f1219, 0 5px 15px #00000080;
+            transition: 0.08s linear;
+            letter-spacing: 1px;
+            border: 1px solid #55637a;
+        }
+
+        .input-area button:active {
+            transform: translateY(5px);
+            box-shadow: 0 1px 0 #0f1219, 0 5px 12px #000000;
+        }
+
+        .input-area button:hover {
+            background: #3d4a60;
+            color: white;
+        }
+
+        .digit-indicator {
+            color: #f0e68c;
+            font-size: 1.6rem;
+            font-weight: 800;
+            min-width: 2.5rem;
+            text-align: center;
+            text-shadow: 0 0 15px #ffd966;
+            font-family: 'Courier New', monospace;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: #4a5c74;
+            font-size: 0.75rem;
+            margin-top: 1.2rem;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="display-panel">
+            <!-- 段码屏区域 -->
+            <div class="seven-seg">
+                <div class="seg-digit" id="segDigit">
+                    <!-- 七段 a, b, c, d, e, f, g 按顺时针排列 -->
+                    <div class="segment seg-a" id="seg-a"></div>
+                    <div class="segment seg-b" id="seg-b"></div>
+                    <div class="segment seg-c" id="seg-c"></div>
+                    <div class="segment seg-d" id="seg-d"></div>
+                    <div class="segment seg-e" id="seg-e"></div>
+                    <div class="segment seg-f" id="seg-f"></div>
+                    <div class="segment seg-g" id="seg-g"></div>
+                </div>
+            </div>
+
+            <!-- 八个小灯区域 -->
+            <div class="led-panel">
+                <div class="led-label">◆ 八位 LED ◆</div>
+                <div class="led-row" id="ledRow">
+                    <!-- 8个LED，JS动态生成也可以，但为了方便直接写好 -->
+                    <div class="led" id="led0"></div>
+                    <div class="led" id="led1"></div>
+                    <div class="led" id="led2"></div>
+                    <div class="led" id="led3"></div>
+                    <div class="led" id="led4"></div>
+                    <div class="led" id="led5"></div>
+                    <div class="led" id="led6"></div>
+                    <div class="led" id="led7"></div>
+                </div>
+                <div class="digit-indicator" id="digitDisplay">0</div>
+            </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="input-area">
+            <label for="numInput">输入数字 (0-9):</label>
+            <input type="number" id="numInput" min="0" max="9" value="0" step="1">
+            <button id="applyBtn">显示</button>
+        </div>
+        <div class="footer-note">段码屏 + 八小灯 · 对应数字显示</div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- 七段数码管段码映射 (a,b,c,d,e,f,g) ----------
+            // 每个数字对应的段亮起: 1表示亮，0表示灭
+            // 顺序: a, b, c, d, e, f, g
+            const SEG_MAP = {
+                0: [1, 1, 1, 1, 1, 1, 0], // 0: a b c d e f 亮，g灭
+                1: [0, 1, 1, 0, 0, 0, 0], // 1: b c 亮
+                2: [1, 1, 0, 1, 1, 0, 1], // 2: a b d e g 亮
+                3: [1, 1, 1, 1, 0, 0, 1], // 3: a b c d g 亮
+                4: [0, 1, 1, 0, 0, 1, 1], // 4: b c f g 亮
+                5: [1, 0, 1, 1, 0, 1, 1], // 5: a c d f g 亮
+                6: [1, 0, 1, 1, 1, 1, 1], // 6: a c d e f g 亮 (b灭)
+                7: [1, 1, 1, 0, 0, 0, 0], // 7: a b c 亮
+                8: [1, 1, 1, 1, 1, 1, 1], // 8: 全亮
+                9: [1, 1, 1, 1, 0, 1, 1]  // 9: a b c d f g 亮 (e灭)
+            };
+
+            // 段id对应顺序: index 0->a, 1->b, 2->c, 3->d, 4->e, 5->f, 6->g
+            const SEG_IDS = ['seg-a', 'seg-b', 'seg-c', 'seg-d', 'seg-e', 'seg-f', 'seg-g'];
+
+            // 获取所有段元素
+            const segElements = SEG_IDS.map(id => document.getElementById(id));
+
+            // 获取所有LED元素 (led0 ~ led7)
+            const ledElements = [];
+            for (let i = 0; i < 8; i++) {
+                ledElements.push(document.getElementById(`led${i}`));
+            }
+
+            // 数字显示元素
+            const digitDisplayEl = document.getElementById('digitDisplay');
+            const numInput = document.getElementById('numInput');
+            const applyBtn = document.getElementById('applyBtn');
+
+            // ---------- 核心函数: 根据数字更新段码和LED ----------
+            function updateDisplayFromDigit(digit) {
+                // 确保digit是0-9的整数
+                digit = Math.min(9, Math.max(0, Number(digit) || 0));
+                // 保留整数
+                digit = Math.floor(digit);
+
+                // 1. 更新七段数码管
+                const segStates = SEG_MAP[digit] || SEG_MAP[0];
+                // 先全部重置为off
+                segElements.forEach(el => el.classList.remove('on'));
+                // 再根据segStates点亮
+                segStates.forEach((isOn, idx) => {
+                    if (isOn && segElements[idx]) {
+                        segElements[idx].classList.add('on');
+                    }
+                });
+
+                // 2. 更新八个小灯: 根据数字的二进制表示 (低8位)
+                // 小灯从右到左对应bit0 ~ bit7 (即led0是最低位), 但可视化一般习惯左高位? 
+                // 但题目没有明确顺序，我们按二进制直观: led0为最低位(LSB)，led7为最高位(MSB)，
+                // 但是视觉上从左到右是led0~led7? 我们布局是led0在左(第一个) 还是按照从左到右显示bit7~bit0?
+                // 为了让用户感觉更符合常规(从左到右高位到低位)，我们把led0放在左边代表bit7? 
+                // 但是元素id已固定: led0~led7, 从左到右id是0~7。为了视觉直观，可以设定led0对应bit7, led7对应bit0。
+                // 这样如果数字为1，二进制00000001，则最右边(led7)亮，比较符合习惯。
+                // 但是到底哪个好? 也可以led0为LSB放在最右边，但布局是从左到右。重新调整布局? 不变id。
+                // 我决定采用: led0 (最左边) 对应bit7, led7 (最右边) 对应bit0。这样阅读顺序为高位在左。
+                // 这样数字5 (00000101) -> led5(bit2)和led7(bit0)亮? 等等算一下:
+                // 位序: bit7 ... bit0。数字5二进制00000101 -> bit2=1, bit0=1. 
+                // 若led0=bit7, led7=bit0 => led5 (bit2) 和 led7 (bit0) 亮。
+                // 视觉效果还行。也可以反过来，但无伤大雅。
+                // 但更符合人类直觉: 数字越大，亮的灯越多？二进制不是这样。不需要纠结，就用二进制映射，说明清楚即可。
+                // 用户可能认为小灯代表数字的二进制。这里用8位二进制显示。
+                // 数字0-9，最多亮4个灯 (9=1001, 亮2个; 8=1000 亮1个? 但是9=1001亮2个; 实际上没有超过4个)。没关系。
+                
+                // 方案: 灯索引 i (0~7) 对应二进制位 (7-i)。即led0是最高位(bit7), led7是最低位(bit0)。
+                // 这样最左边的灯表示128，最右边表示1。数字0-9的二进制高5位都是0，所以左边5个灯始终不亮，只有右边3个灯可能亮。
+                // 看起来太单调。不如反过来: led0对应bit0, led7对应bit7。但数字<10, 所以bit0~bit3变化，bit4~bit7灭。
+                // 这样左边4个灯灭，右边4个灯亮/灭。更明显。而且更符合"小灯从右往左递增"的常理。
+                // 所以最终决定: led0 (最左边) 对应 bit0? 但是视觉上最左边代表最低位有点反直觉。
+                // 为了视觉美观并且让灯亮得更多一些，也可以直接使用数字的二进制，但是亮灯太少了。
+                // 题目要求"八个小灯同时输入数字显示对应的数字"，可能意思就是八个小灯表示二进制。但也没规定顺序。
+                // 我选择一个看起来更舒服的方式: 从左到右 led0~led7 对应 bit0 ~ bit7? 这样数字3 (00000011) 会是左边两个灯亮，看着不太对。
+                // 为了更直观，让灯从右向左表示低位到高位: 最右边是低位。所以 led7 (最右) = bit0, led6=bit1 ... led0=bit7.
+                // 这样数字0 -> 全灭; 数字1 -> led7亮; 数字2 -> led6亮; 3 -> led6,led7亮; 4->led5亮 ... 左边灯基本不亮。
+                // 这个更好，因为越靠右的灯越容易亮，看起来像是二进制低位。但左侧灯很少亮，也许用户觉得无趣。
+                // 但八个小灯全用上很难，因为0~9只用4位。没关系，能亮就行。
+                // 我决定采用: 从右到左依次是bit0, bit1, ..., bit7，即led7是bit0, led6是bit1, ..., led0是bit7。
+                // 这样数字8 (1000) 是led4亮? 计算: 数字8二进制00001000, bit3=1。bit3对应led4 (因为led7=bit0, led6=bit1, led5=bit2, led4=bit3)。
+                // 所以数字8会让led4亮，位于中间偏右，还算合理。数字9 (1001) bit3和bit0亮 -> led4和led7亮。
+                // 可视化不错。就这个方案。
+                
+                // 计算: 对于每个灯索引 i (0~7): 它对应的位是 (7 - i) 吗? 我们设定led0=bit7, led1=bit6, led2=bit5, led3=bit4, led4=bit3, led5=bit2, led6=bit1, led7=bit0。
+                // 所以对于索引 i, 它代表的位是 (7 - i)。
+                // 判断该位是否为1: (digit >> (7 - i)) & 1
+                for (let i = 0; i < 8; i++) {
+                    const bitPosition = 7 - i;  // led0 -> bit7, led7 -> bit0
+                    const isBitSet = (digit >> bitPosition) & 1;
+                    if (isBitSet) {
+                        ledElements[i].classList.add('on');
+                    } else {
+                        ledElements[i].classList.remove('on');
+                    }
+                }
+
+                // 3. 更新数字显示
+                digitDisplayEl.textContent = digit;
+            }
+
+            // ---------- 从输入框获取数字并更新 ----------
+            function applyInputNumber() {
+                let rawValue = numInput.value.trim();
+                if (rawValue === '') {
+                    rawValue = '0';
+                }
+                let num = Number(rawValue);
+                if (isNaN(num)) {
+                    num = 0;
+                }
+                // 取整，且约束到0~9
+                num = Math.floor(num);
+                if (num < 0) num = 0;
+                if (num > 9) num = 9;
+                // 更新输入框显示修正后的值 (可选)
+                numInput.value = num;
+                // 更新显示
+                updateDisplayFromDigit(num);
+            }
+
+            // ---------- 事件绑定 ----------
+            applyBtn.addEventListener('click', applyInputNumber);
+
+            // 输入框回车也可以触发
+            numInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    applyInputNumber();
+                }
+            });
+
+            // 也可以监听输入变化实时更新？但用户可能想按按钮。为了体验更好，加上input事件但限制范围? 
+            // 或者不实时，避免用户输入一半触发。也可以加上，但小心负数等。保持按钮为主。
+            // 但我们也可以加上失焦更新或者简单输入时自动修正? 不过不加，用按钮更清晰。
+            // 但为了更流畅，当输入框内容变化且是有效数字时，也可以自动更新（但可能用户想输入多位数？0-9只有一位，所以可以自动）。
+            // 这里为了符合"输入数字显示"的交互，可以自动，但可能会频繁闪烁。还是用按钮和回车。
+            // 但是为了演示方便，我们再添加一个 input 事件用于自动更新，但限制为0-9的单个数字，如果是多位就忽略？
+            // 容易造成混乱，就按按钮吧。
+
+            // 初始化显示数字0
+            updateDisplayFromDigit(0);
+
+            // 额外：为防止输入负数等，再次确保
+            numInput.addEventListener('change', function() {
+                let val = parseInt(this.value, 10);
+                if (isNaN(val)) val = 0;
+                if (val < 0) val = 0;
+                if (val > 9) val = 9;
+                this.value = val;
+                // 但不自动更新显示，等按钮或回车
+            });
+
+            // 为了让界面一开始就点亮0，但数字0会让所有led灭? 0的二进制全0，所以led全灭。
+            // 但是可以手动亮起一些？按标准，0就应该全灭。段码屏显示0。
+            // 看起来不错。
+        })();
+    </script>
+</body>
+</html>
